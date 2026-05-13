@@ -21,7 +21,7 @@ module HighLevel
       location_access_token: nil,
       client_id: nil,
       client_secret: nil,
-      session_storage: nil,
+      session_storage: Storage::Memory.new,
       logger: nil,
       instrumenter: nil
     )
