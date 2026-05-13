@@ -42,9 +42,10 @@ module HighLevel
     end
 
     def build_connection
+      resolver = TokenResolver.new(config: @config, storage: @config.session_storage)
       Faraday.new(url: @config.base_url) do |f|
+        f.use Middleware::Authentication, config: @config, resolver: resolver
         f.request :json
-        f.use Middleware::Authentication, config: @config
         f.use Middleware::ErrorHandler
         f.response :json, content_type: /\bjson\b/
         f.adapter Faraday.default_adapter
