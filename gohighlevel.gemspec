@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
   spec.files = Dir["lib/**/*.rb"] + %w[LICENSE.txt CHANGELOG.md gohighlevel.gemspec]
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "base64", "~> 0.2"
   spec.add_dependency "faraday", "~> 2.0"
   spec.add_dependency "faraday-multipart", "~> 1.0"
   spec.add_dependency "zeitwerk", "~> 2.6"

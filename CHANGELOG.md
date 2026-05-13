@@ -45,3 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rewrites the Authorization header, and retries once; a context-marked
   retry flag prevents loops. `Configuration` gains a `redirect_uri`
   field. `Client#oauth` is exposed.
+- Webhook verification (Phase 5): `HighLevel::Webhooks.verify(payload:,
+  signature:, public_key:, scheme:)` supports both `:rsa` (RSA-SHA256,
+  arrives on `x-wh-signature`) and `:ed25519` (arrives on
+  `x-ghl-signature`). Both schemes use Ruby's stdlib `OpenSSL` — no
+  `rbnacl` dep needed in Ruby 3.3+. Raises
+  `HighLevel::Webhooks::InvalidSignatureError` on any failure mode
+  (tampered body, wrong key, malformed base64, missing inputs).
+  `base64` added as an explicit runtime dep (no longer default-gem in
+  Ruby 3.4+).
