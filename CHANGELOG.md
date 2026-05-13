@@ -21,6 +21,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   SDK (vendor/highlevel-api-sdk @ b1a1454). `Middleware::Authentication`
   now consults the resolver per-request when generated code passes a
   security context, falling back to the simple priority chain when none is
-  provided. Fixture matrix in `spec/fixtures/token_resolution.json` covers
+  provided. Fixture matrix in `test/fixtures/token_resolution.json` covers
   every priority branch and resource-id extraction case. `script/fetch_ts_sdk.sh`
   pins the TS SDK to a reproducible SHA.
+- Session storage (Phase 3): `HighLevel::Storage::Base` defines the
+  seven-method backend contract (`init`, `disconnect`, `set_client_id`,
+  `set_session`, `get_session`, `get_access_token`, `delete_session`).
+  `HighLevel::Storage::Memory` is the default, thread-safe via Monitor,
+  application-scoped via the client_id prefix. `HighLevel::Client.new` now
+  initializes the configured storage and propagates the client_id when
+  OAuth credentials are present. `test/support/session_storage_contract.rb`
+  is the shared Minitest module future backends will include.

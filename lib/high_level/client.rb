@@ -7,6 +7,7 @@ module HighLevel
     def initialize(config = nil, **opts)
       @config = coerce_config(config, opts)
       validate!
+      initialize_storage
       @connection = build_connection
     end
 
@@ -39,6 +40,14 @@ module HighLevel
 
     def oauth_client_pair?
       @config.client_id && @config.client_secret
+    end
+
+    def initialize_storage
+      storage = @config.session_storage
+      return if storage.nil?
+
+      storage.set_client_id(@config.client_id) if @config.client_id
+      storage.init
     end
 
     def build_connection

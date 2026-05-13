@@ -37,3 +37,9 @@ Metrics/ParameterLists:
 Naming/FileName:
   Exclude:
     - "lib/gohighlevel.rb"
+
+# Storage backends intentionally mirror the TS SDK's setClientId name.
+Naming/AccessorMethodName:
+  Exclude:
+    - "lib/high_level/storage/**/*"
+    - "test/**/*"

@@ -23,9 +23,18 @@ module HighLevel
     end
 
     def test_value_equality
-      a = Configuration.new(private_integration_token: "x")
-      b = Configuration.new(private_integration_token: "x")
+      storage = Storage::Memory.new
+      a = Configuration.new(private_integration_token: "x", session_storage: storage)
+      b = Configuration.new(private_integration_token: "x", session_storage: storage)
       assert_equal a, b
+    end
+
+    def test_session_storage_defaults_to_a_fresh_memory_per_instance
+      a = Configuration.new
+      b = Configuration.new
+
+      assert_instance_of Storage::Memory, a.session_storage
+      refute_same a.session_storage, b.session_storage
     end
 
     def test_credential_fields_default_to_nil
