@@ -54,3 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (tampered body, wrong key, malformed base64, missing inputs).
   `base64` added as an explicit runtime dep (no longer default-gem in
   Ruby 3.4+).
+- Spec sync infrastructure (Phase 6): `script/fetch_specs.rb` clones
+  `GoHighLevel/highlevel-api-docs` at a pinned SHA into
+  `vendor/openapi/` and writes `vendor/openapi/VERSION` (SHA +
+  fetched_at + source URL). Idempotent — re-running at the same pin is
+  a true no-op (no file writes). `bin/sync-spec` is the thin wrapper.
+  `vendor/openapi/` is entirely gitignored; `script/fetch_specs.rb`
+  itself is the canonical pin. `CONTRIBUTING.md` documents the sync +
+  bump workflow.
