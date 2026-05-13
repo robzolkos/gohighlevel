@@ -10,3 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial gem skeleton (Phase 0): gemspec, Bundler, Zeitwerk loader, RSpec,
   RuboCop, SimpleCov, MIT license.
+- Core HTTP client (Phase 1): `HighLevel::Configuration` (immutable `Data`),
+  `HighLevel::Client` building a Faraday connection, `Authentication` and
+  `ErrorHandler` middleware, and a typed exception hierarchy
+  (`Error`, `ConfigurationError`, `NetworkError`, `BadRequestError`,
+  `UnauthorizedError`, `ForbiddenError`, `NotFoundError`,
+  `UnprocessableEntityError`, `RateLimitError`, `ServerError`).
