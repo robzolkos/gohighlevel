@@ -13,3 +13,7 @@ Gemfile.lock
 # Vendored reference repos — fetched on demand at pinned SHAs.
 /vendor/highlevel-api-sdk/
 /vendor/openapi/
+
+# Node harness — installed locally by skills, not shipped with the gem.
+/script/ts_harness/node_modules/
+/script/ts_harness/package-lock.json

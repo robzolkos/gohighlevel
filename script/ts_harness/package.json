@@ -1,0 +1,11 @@
+{
+  "name": "gohighlevel-ts-harness",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Local Node harness that captures TS SDK request shapes for Ruby fixture generation. Not published.",
+  "main": "harness.cjs",
+  "dependencies": {
+    "@gohighlevel/api-client": "file:../../vendor/highlevel-api-sdk",
+    "axios": "^1.7.0"
+  }
+}
