@@ -16,3 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`Error`, `ConfigurationError`, `NetworkError`, `BadRequestError`,
   `UnauthorizedError`, `ForbiddenError`, `NotFoundError`,
   `UnprocessableEntityError`, `RateLimitError`, `ServerError`).
+- Token resolver (Phase 2): `HighLevel::TokenResolver` ports
+  `getTokenForSecurity` + `extractResourceId` from the official TypeScript
+  SDK (vendor/highlevel-api-sdk @ b1a1454). `Middleware::Authentication`
+  now consults the resolver per-request when generated code passes a
+  security context, falling back to the simple priority chain when none is
+  provided. Fixture matrix in `spec/fixtures/token_resolution.json` covers
+  every priority branch and resource-id extraction case. `script/fetch_ts_sdk.sh`
+  pins the TS SDK to a reproducible SHA.

@@ -1,0 +1,183 @@
+{
+  "source": "vendor/highlevel-api-sdk/lib/HighLevel.ts @ b1a1454 (getTokenForSecurity, extractResourceId)",
+  "resolve": [
+    {
+      "name": "PIT wins over all other requirements",
+      "config": { "private_integration_token": "pit-1", "agency_access_token": "ag-1", "location_access_token": "loc-1" },
+      "args": { "security_requirements": ["Location-Access-Only"], "headers": {}, "query": {}, "body": {} },
+      "expect": { "token": "pit-1", "source": "private_integration_token" }
+    },
+    {
+      "name": "PIT wins with no security requirements",
+      "config": { "private_integration_token": "pit-1" },
+      "args": { "security_requirements": [] },
+      "expect": { "token": "pit-1", "source": "private_integration_token" }
+    },
+    {
+      "name": "PIT wins even when no other tokens are configured",
+      "config": { "private_integration_token": "pit-1" },
+      "args": { "security_requirements": ["Agency-Access-Only"] },
+      "expect": { "token": "pit-1", "source": "private_integration_token" }
+    },
+
+    {
+      "name": "Agency-Access-Only with agency_access_token returns it",
+      "config": { "agency_access_token": "ag-1" },
+      "args": { "security_requirements": ["Agency-Access-Only"] },
+      "expect": { "token": "ag-1", "source": "agency_access_token" }
+    },
+    {
+      "name": "Agency-Access-Only without agency token and no storage raises",
+      "config": { "location_access_token": "loc-1" },
+      "args": { "security_requirements": ["Agency-Access-Only"] },
+      "expect": { "error": "ConfigurationError", "message_includes": "Agency Access Token" }
+    },
+
+    {
+      "name": "Location-Access-Only with location_access_token returns it",
+      "config": { "location_access_token": "loc-1" },
+      "args": { "security_requirements": ["Location-Access-Only"] },
+      "expect": { "token": "loc-1", "source": "location_access_token" }
+    },
+    {
+      "name": "Location-Access-Only without location token and no storage raises",
+      "config": { "agency_access_token": "ag-1" },
+      "args": { "security_requirements": ["Location-Access-Only"] },
+      "expect": { "error": "ConfigurationError", "message_includes": "Location Access Token" }
+    },
+
+    {
+      "name": "Agency-Access (flexible) prefers agency_access_token",
+      "config": { "agency_access_token": "ag-1", "location_access_token": "loc-1" },
+      "args": { "security_requirements": ["Agency-Access"] },
+      "expect": { "token": "ag-1", "source": "agency_access_token" }
+    },
+    {
+      "name": "Agency-Access (flexible) falls back to location_access_token",
+      "config": { "location_access_token": "loc-1" },
+      "args": { "security_requirements": ["Agency-Access"] },
+      "expect": { "token": "loc-1", "source": "location_access_token" }
+    },
+    {
+      "name": "Location-Access flexible prefers agency_access_token (per TS)",
+      "config": { "agency_access_token": "ag-1", "location_access_token": "loc-1" },
+      "args": { "security_requirements": ["Location-Access"] },
+      "expect": { "token": "ag-1", "source": "agency_access_token" }
+    },
+    {
+      "name": "bearer requirement falls back to location_access_token when no agency",
+      "config": { "location_access_token": "loc-1" },
+      "args": { "security_requirements": ["bearer"] },
+      "expect": { "token": "loc-1", "source": "location_access_token" }
+    },
+    {
+      "name": "Agency-Access + Location-Access together: agency_access_token wins",
+      "config": { "agency_access_token": "ag-1", "location_access_token": "loc-1" },
+      "args": { "security_requirements": ["Agency-Access", "Location-Access"] },
+      "expect": { "token": "ag-1", "source": "agency_access_token" }
+    },
+    {
+      "name": "Flexible requirement with no tokens and no storage raises",
+      "config": {},
+      "args": { "security_requirements": ["Agency-Access"] },
+      "expect": { "error": "ConfigurationError", "message_includes": "Authentication token" }
+    },
+
+    {
+      "name": "No security requirements and no tokens raises",
+      "config": {},
+      "args": { "security_requirements": [] },
+      "expect": { "error": "ConfigurationError", "message_includes": "No authentication token" }
+    }
+  ],
+
+  "extract_resource_id": [
+    {
+      "name": "header x-company-id picked when agency requirement",
+      "args": { "security_requirements": ["Agency-Access-Only"], "headers": { "x-company-id": "co-1" } },
+      "expect": "co-1"
+    },
+    {
+      "name": "header companyId fallback when agency requirement",
+      "args": { "security_requirements": ["Agency-Access-Only"], "headers": { "companyId": "co-2" } },
+      "expect": "co-2"
+    },
+    {
+      "name": "header company-id fallback when agency requirement",
+      "args": { "security_requirements": ["Agency-Access-Only"], "headers": { "company-id": "co-3" } },
+      "expect": "co-3"
+    },
+    {
+      "name": "header x-location-id picked when location requirement",
+      "args": { "security_requirements": ["Location-Access-Only"], "headers": { "x-location-id": "loc-1" } },
+      "expect": "loc-1"
+    },
+    {
+      "name": "query companyId fallback when no header for agency req",
+      "args": { "security_requirements": ["Agency-Access-Only"], "headers": {}, "query": { "companyId": "co-q" } },
+      "expect": "co-q"
+    },
+    {
+      "name": "query company_id snake_case fallback",
+      "args": { "security_requirements": ["Agency-Access-Only"], "query": { "company_id": "co-snake" } },
+      "expect": "co-snake"
+    },
+    {
+      "name": "query locationId fallback for location req",
+      "args": { "security_requirements": ["Location-Access-Only"], "query": { "locationId": "loc-q" } },
+      "expect": "loc-q"
+    },
+    {
+      "name": "body locationId fallback when no header or query",
+      "args": { "security_requirements": ["Location-Access-Only"], "body": { "locationId": "loc-body" } },
+      "expect": "loc-body"
+    },
+    {
+      "name": "body location_id snake_case fallback",
+      "args": { "security_requirements": ["Location-Access-Only"], "body": { "location_id": "loc-bsnake" } },
+      "expect": "loc-bsnake"
+    },
+    {
+      "name": "agency requirement returns nil when only locationId is present",
+      "args": { "security_requirements": ["Agency-Access-Only"], "headers": { "x-location-id": "loc-1" } },
+      "expect": null
+    },
+    {
+      "name": "location requirement returns nil when only companyId is present",
+      "args": { "security_requirements": ["Location-Access-Only"], "headers": { "x-company-id": "co-1" } },
+      "expect": null
+    },
+    {
+      "name": "both reqs + preference=company picks companyId when both present",
+      "args": {
+        "security_requirements": ["Agency-Access", "Location-Access"],
+        "headers": { "x-company-id": "co-1", "x-location-id": "loc-1" },
+        "preference": "company"
+      },
+      "expect": "co-1"
+    },
+    {
+      "name": "both reqs + preference=location picks locationId when both present",
+      "args": {
+        "security_requirements": ["Agency-Access", "Location-Access"],
+        "headers": { "x-company-id": "co-1", "x-location-id": "loc-1" },
+        "preference": "location"
+      },
+      "expect": "loc-1"
+    },
+    {
+      "name": "both reqs + preference=company without companyId falls through to location-needs (location wins by code order)",
+      "args": {
+        "security_requirements": ["Agency-Access", "Location-Access"],
+        "headers": { "x-location-id": "loc-1" },
+        "preference": "company"
+      },
+      "expect": "loc-1"
+    },
+    {
+      "name": "no security requirements returns nil",
+      "args": { "security_requirements": [], "headers": { "x-company-id": "co-1", "x-location-id": "loc-1" } },
+      "expect": null
+    }
+  ]
+}

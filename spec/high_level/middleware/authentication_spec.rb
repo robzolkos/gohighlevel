@@ -58,4 +58,39 @@ RSpec.describe HighLevel::Middleware::Authentication do
 
     expect { middleware.on_request(env) }.to raise_error(HighLevel::ConfigurationError)
   end
+
+  context "when the request carries security context" do
+    def env_with_context(headers: {}, body: nil, query: nil, context: nil)
+      url = URI.parse("https://example.com/x")
+      url.query = URI.encode_www_form(query) if query
+      env = Faraday::Env.from(
+        request_headers: Faraday::Utils::Headers.new(headers),
+        url: url,
+        body: body
+      )
+      env.request = Faraday::RequestOptions.new
+      env.request.context = { HighLevel::Middleware::Authentication::CONTEXT_KEY => context } if context
+      env
+    end
+
+    it "uses the resolver and prefers agency token for Agency-Access-Only" do
+      config = HighLevel::Configuration.new(
+        agency_access_token: "ag-1",
+        location_access_token: "loc-1"
+      )
+      middleware = described_class.new(app, config: config)
+      env = env_with_context(context: { security_requirements: ["Agency-Access-Only"] })
+
+      middleware.on_request(env)
+      expect(env.request_headers["Authorization"]).to eq("Bearer ag-1")
+    end
+
+    it "raises when the resolver cannot satisfy the requirement" do
+      config = HighLevel::Configuration.new(agency_access_token: "ag-1")
+      middleware = described_class.new(app, config: config)
+      env = env_with_context(context: { security_requirements: ["Location-Access-Only"] })
+
+      expect { middleware.on_request(env) }.to raise_error(HighLevel::ConfigurationError)
+    end
+  end
 end
