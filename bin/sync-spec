@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Sync the vendored HighLevel OpenAPI specs to the pinned SHA.
+# See script/fetch_specs.rb for the active pin and bump workflow.
+set -euo pipefail
+exec ruby "$(dirname "$0")/../script/fetch_specs.rb" "$@"
