@@ -31,6 +31,10 @@ Metrics/AbcSize:
   Exclude:
     - "test/**/*"
 
+Metrics/ClassLength:
+  Exclude:
+    - "test/**/*"
+
 Metrics/ParameterLists:
   CountKeywordArgs: false
 

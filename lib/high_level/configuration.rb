@@ -9,6 +9,7 @@ module HighLevel
     :location_access_token,
     :client_id,
     :client_secret,
+    :redirect_uri,
     :session_storage,
     :logger,
     :instrumenter
@@ -21,6 +22,7 @@ module HighLevel
       location_access_token: nil,
       client_id: nil,
       client_secret: nil,
+      redirect_uri: nil,
       session_storage: Storage::Memory.new,
       logger: nil,
       instrumenter: nil

@@ -2,12 +2,13 @@
 
 module HighLevel
   class Client
-    attr_reader :config, :connection
+    attr_reader :config, :connection, :oauth
 
     def initialize(config = nil, **opts)
       @config = coerce_config(config, opts)
       validate!
       initialize_storage
+      @oauth = Oauth.new(config: @config)
       @connection = build_connection
     end
 
@@ -52,7 +53,10 @@ module HighLevel
 
     def build_connection
       resolver = TokenResolver.new(config: @config, storage: @config.session_storage)
+      refresher = TokenRefresher.new(config: @config, oauth: @oauth, storage: @config.session_storage)
+
       Faraday.new(url: @config.base_url) do |f|
+        f.use Middleware::RefreshOn401, refresher: refresher, resolver: resolver
         f.use Middleware::Authentication, config: @config, resolver: resolver
         f.request :json
         f.use Middleware::ErrorHandler
