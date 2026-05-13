@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Regenerate Ruby resource + model code from the vendored OpenAPI specs.
+# See script/generate.rb for usage:
+#   bin/generate                  # all apps
+#   bin/generate contacts         # one
+#   bin/generate contacts blogs   # several
+set -euo pipefail
+exec ruby "$(dirname "$0")/../script/generate.rb" "$@"

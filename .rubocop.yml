@@ -26,14 +26,36 @@ Metrics/BlockLength:
 Metrics/MethodLength:
   Exclude:
     - "test/**/*"
+    - "script/generate.rb"
 
 Metrics/AbcSize:
   Exclude:
     - "test/**/*"
+    - "script/generate.rb"
 
 Metrics/ClassLength:
   Exclude:
     - "test/**/*"
+    - "lib/high_level/resources/**/*"
+    - "lib/high_level/models/**/*"
+    - "script/generate.rb"
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - "script/generate.rb"
+
+Metrics/PerceivedComplexity:
+  Exclude:
+    - "script/generate.rb"
+
+Naming/MethodParameterName:
+  Exclude:
+    - "script/generate.rb"
+
+Layout/LineLength:
+  Exclude:
+    - "lib/high_level/resources/**/*"
+    - "lib/high_level/models/**/*"
 
 Metrics/ParameterLists:
   CountKeywordArgs: false
