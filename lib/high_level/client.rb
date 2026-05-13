@@ -12,6 +12,10 @@ module HighLevel
       @connection = build_connection
     end
 
+    def contacts
+      @contacts ||= Resources::Contacts.new(self)
+    end
+
     private
 
     def coerce_config(config, opts)

@@ -62,3 +62,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vendor/openapi/` is entirely gitignored; `script/fetch_specs.rb`
   itself is the canonical pin. `CONTRIBUTING.md` documents the sync +
   bump workflow.
+- Resource generator + first emitted resource (Phase 7):
+  `script/generate.rb` (wrapped by `bin/generate` and the `ghl-generate`
+  skill) consumes a vendored OpenAPI app spec and emits
+  `lib/high_level/resources/<app>.rb` + `lib/high_level/models/<app>/*.rb`.
+  Generated method shape: snake_case operation name, required kwargs
+  for path params, optional kwargs for query/header params, optional
+  `body:` when `requestBody` is declared, `**_opts` catch-all, and a
+  delegate to `HighLevel::Resources::Base#request(method:, path:,
+  security:, ...)`. The Base runtime sets the request's
+  `:high_level_security` context so the existing Authentication
+  middleware picks per-op security requirements. Generator runs
+  `rubocop -A` as a post-step. First emission: contacts (32 operations,
+  61 models). `client.contacts` is the live entry point. Smoke test
+  covers method dispatch, path interpolation, query params, body
+  encoding, and the operation count vs. spec.
