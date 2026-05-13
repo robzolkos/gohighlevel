@@ -32,3 +32,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   initializes the configured storage and propagates the client_id when
   OAuth credentials are present. `test/support/session_storage_contract.rb`
   is the shared Minitest module future backends will include.
+- OAuth + 401 refresh (Phase 4): `HighLevel::Oauth` implements the four
+  OAuth flows directly from the
+  [GoHighLevel OAuth docs](https://marketplace.gohighlevel.com/docs/ghl/oauth/) —
+  `authorization_url`, `exchange_code`, `refresh_token`,
+  `get_location_access_token`. Form-encoded bodies over a dedicated
+  Faraday connection. `HighLevel::TokenRefresher` encapsulates the
+  recovery policy (direct refresh + location-token-from-company-token
+  fallback for behavioral parity with the TS SDK's
+  `handleLocationTokenFallback`). `HighLevel::Middleware::RefreshOn401`
+  rescues `UnauthorizedError`, asks the refresher for a new token,
+  rewrites the Authorization header, and retries once; a context-marked
+  retry flag prevents loops. `Configuration` gains a `redirect_uri`
+  field. `Client#oauth` is exposed.
