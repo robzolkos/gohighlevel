@@ -1,0 +1,72 @@
+{
+  "source": "vendor/highlevel-api-sdk @ b1a1454b8b7e355037abf57161cd80cedfc8b3cc",
+  "captured_at": "2026-05-13T20:34:48.453Z",
+  "flows": [
+    {
+      "name": "refresh_token_for_location_user",
+      "description": "POST /oauth/token with grant_type=refresh_token for a location user",
+      "request": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/oauth/token",
+        "headers": {
+          "Accept": "application/json, text/plain, */*",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Version": "2021-07-28"
+        },
+        "body": "refresh_token=the-refresh-token&client_id=test-client-id&client_secret=test-client-secret&grant_type=refresh_token&user_type=Location",
+        "params": {}
+      }
+    },
+    {
+      "name": "refresh_token_for_company_user",
+      "description": "POST /oauth/token with grant_type=refresh_token for a company user",
+      "request": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/oauth/token",
+        "headers": {
+          "Accept": "application/json, text/plain, */*",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Version": "2021-07-28"
+        },
+        "body": "refresh_token=the-refresh-token&client_id=test-client-id&client_secret=test-client-secret&grant_type=refresh_token&user_type=Company",
+        "params": {}
+      }
+    },
+    {
+      "name": "exchange_authorization_code",
+      "description": "POST /oauth/token with grant_type=authorization_code (initial token exchange)",
+      "request": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/oauth/token",
+        "headers": {
+          "Accept": "application/json, text/plain, */*",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Version": "2021-07-28"
+        },
+        "body": "client_id=test-client-id&client_secret=test-client-secret&grant_type=authorization_code&code=auth-code-123&user_type=Location&redirect_uri=https%3A%2F%2Fexample.com%2Foauth%2Fcallback",
+        "params": {}
+      }
+    },
+    {
+      "name": "get_location_access_token",
+      "description": "POST /oauth/locationToken — derive a location token from an agency token",
+      "request": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/oauth/locationToken",
+        "headers": {
+          "Accept": "application/json, text/plain, */*",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Version": "2021-07-28",
+          "Authorization": "Bearer ag-test-token"
+        },
+        "body": "companyId=co-1&locationId=loc-1",
+        "params": {}
+      }
+    },
+    {
+      "name": "authorization_url_construction",
+      "description": "Pure URL-construction helper; no HTTP. Captured as a literal string.",
+      "url": "https://marketplace.gohighlevel.com/oauth/chooselocation?client_id=test-client-id&redirect_uri=https%3A%2F%2Fexample.com%2Foauth%2Fcallback&scope=contacts.readonly+contacts.write&response_type=code"
+    }
+  ]
+}
