@@ -8,9 +8,6 @@ AllCops:
     - "coverage/**/*"
     - "pkg/**/*"
 
-plugins:
-  - rubocop-rspec
-
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 
@@ -22,9 +19,17 @@ Style/Documentation:
 
 Metrics/BlockLength:
   Exclude:
-    - "spec/**/*"
+    - "test/**/*"
     - "*.gemspec"
     - "Rakefile"
+
+Metrics/MethodLength:
+  Exclude:
+    - "test/**/*"
+
+Metrics/AbcSize:
+  Exclude:
+    - "test/**/*"
 
 Metrics/ParameterLists:
   CountKeywordArgs: false
@@ -32,12 +37,3 @@ Metrics/ParameterLists:
 Naming/FileName:
   Exclude:
     - "lib/gohighlevel.rb"
-
-RSpec/ExampleLength:
-  Max: 15
-
-RSpec/MultipleExpectations:
-  Max: 5
-
-RSpec/NestedGroups:
-  Max: 4
