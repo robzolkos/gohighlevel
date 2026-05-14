@@ -62,6 +62,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vendor/openapi/` is entirely gitignored; `script/fetch_specs.rb`
   itself is the canonical pin. `CONTRIBUTING.md` documents the sync +
   bump workflow.
+- All 41 resources generated + wired (Phase 8): regenerated the full
+  resource layer (~1000 generated files) and wired access via a
+  generated `HighLevel::RESOURCE_REGISTRY` constant. `Client` uses
+  `method_missing` + `respond_to_missing?` to dispatch `client.<app>`
+  to the corresponding `Resources::*` class lazily and memoize the
+  instance. Three generator bugs surfaced and fixed during the scale-up:
+  hyphen-containing app/operation names (snake_case'd at filename and
+  identifier level for Zeitwerk), parameter names colliding with Ruby
+  keywords (`end` etc., suffixed with `_`), and duplicate path-vs-query
+  parameters on the same operation (deduped, path wins). One spec is
+  intentionally skipped: `oauth` is hand-written (`HighLevel::Oauth`,
+  Phase 4) because the form-encoded transport differs from the
+  generator's JSON template; the skip is declared in
+  `Generator::SKIP_APPS`. Registry test asserts every spec under
+  `vendor/openapi/apps/` (minus skips) has a registry entry, that each
+  resource subclasses `Resources::Base`, and that every client accessor
+  returns an instance of the correct class.
 - Resource generator + first emitted resource (Phase 7):
   `script/generate.rb` (wrapped by `bin/generate` and the `ghl-generate`
   skill) consumes a vendored OpenAPI app spec and emits

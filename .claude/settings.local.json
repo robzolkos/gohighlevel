@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf lib/high_level/resources/*.rb lib/high_level/models/*)",
+      "Bash(git checkout *)",
+      "Bash(bin/generate)",
+      "Bash(bundle exec *)"
+    ]
+  }
+}
