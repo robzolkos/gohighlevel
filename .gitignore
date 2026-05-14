@@ -8,7 +8,6 @@
 /tmp/
 *.gem
 .rspec_status
-Gemfile.lock
 
 # Vendored reference repos — fetched on demand at pinned SHAs.
 # script/fetch_specs.rb and script/fetch_ts_sdk.sh are the canonical pins.

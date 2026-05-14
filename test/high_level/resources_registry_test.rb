@@ -8,15 +8,16 @@ module HighLevel
       @client = Client.new(private_integration_token: "pit-xyz")
     end
 
-    # Hand-written apps live outside the registry — see Generator::SKIP_APPS.
-    HAND_WRITTEN_APPS = %i[oauth].freeze
+    # The registry must agree with the committed generated resource
+    # files. We check against committed artifacts rather than
+    # vendor/openapi/ — the vendored spec is a build-time input that
+    # isn't present in a fresh checkout (or in CI).
+    def test_registry_matches_the_committed_resource_files
+      resource_files = Dir.glob(File.expand_path("../../lib/high_level/resources/*.rb", __dir__))
+                          .map { |p| File.basename(p, ".rb").to_sym }
+                          .reject { |name| name == :base }
 
-    def test_registry_covers_every_spec_under_vendor_openapi
-      spec_apps = Dir.glob(File.expand_path("../../vendor/openapi/apps/*.json", __dir__))
-                     .map { |p| File.basename(p, ".json").tr("-", "_").to_sym }
-                     .reject { |s| HAND_WRITTEN_APPS.include?(s) }
-
-      assert_equal spec_apps.sort, RESOURCE_REGISTRY.keys.sort
+      assert_equal resource_files.sort, RESOURCE_REGISTRY.keys.sort
     end
 
     def test_every_registered_resource_subclasses_resources_base

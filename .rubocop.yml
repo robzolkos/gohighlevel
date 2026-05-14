@@ -56,6 +56,13 @@ Layout/LineLength:
     - "lib/high_level/resources/**/*"
     - "lib/high_level/models/**/*"
 
+# Generated model field names come straight from the OpenAPI spec —
+# some collide with Data instance methods (members, object_id, method).
+# We can't rename them, so the warning is noise on generated code.
+Lint/DataDefineOverride:
+  Exclude:
+    - "lib/high_level/models/**/*"
+
 Metrics/ParameterLists:
   CountKeywordArgs: false
 
