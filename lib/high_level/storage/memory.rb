@@ -9,6 +9,7 @@ module HighLevel
     # vendor/highlevel-api-sdk/lib/storage/memory-session-storage.ts; uses a
     # Monitor instead of JS's single-threaded model.
     class Memory < Base
+      # Internal bookkeeping keys stripped from sessions on read.
       TIMESTAMP_KEYS = %i[created_at updated_at].freeze
 
       def initialize
@@ -19,10 +20,13 @@ module HighLevel
         @initialized = false
       end
 
+      # (see Base#init)
       def init
         @monitor.synchronize { @initialized = true }
       end
 
+      # (see Base#disconnect)
+      # Memory's disconnect also clears all stored sessions.
       def disconnect
         @monitor.synchronize do
           @sessions.clear
@@ -30,12 +34,14 @@ module HighLevel
         end
       end
 
+      # (see Base#set_client_id)
       def set_client_id(client_id)
         raise ArgumentError, "client_id is required" if client_id.nil? || client_id.to_s.empty?
 
         @monitor.synchronize { @client_id = client_id.to_s }
       end
 
+      # (see Base#set_session)
       def set_session(resource_id, session_data)
         data = symbolize_keys(session_data)
         document = data.merge(
@@ -47,6 +53,7 @@ module HighLevel
         nil
       end
 
+      # (see Base#get_session)
       def get_session(resource_id)
         @monitor.synchronize do
           document = @sessions[unique_key(resource_id)]
@@ -56,20 +63,25 @@ module HighLevel
         end
       end
 
+      # (see Base#get_access_token)
       def get_access_token(resource_id)
         session = get_session(resource_id)
         session && session[:access_token]
       end
 
+      # (see Base#delete_session)
       def delete_session(resource_id)
         @monitor.synchronize { @sessions.delete(unique_key(resource_id)) }
         nil
       end
 
+      # @return [Integer] the number of sessions currently stored
       def session_count
         @monitor.synchronize { @sessions.size }
       end
 
+      # @return [Boolean] whether {#init} has run without a subsequent
+      #   {#disconnect}
       def storage_active?
         @monitor.synchronize { @initialized }
       end

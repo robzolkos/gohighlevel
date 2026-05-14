@@ -7,6 +7,8 @@ module HighLevel
   # vendor/highlevel-api-sdk/lib/HighLevel.ts (`fetchToken` +
   # `handleLocationTokenFallback`).
   class TokenRefresher
+    # A token within this many milliseconds of expiry is treated as
+    # already expired and refreshed proactively.
     EXPIRY_BUFFER_MS = 60_000
 
     def initialize(config:, oauth:, storage:)

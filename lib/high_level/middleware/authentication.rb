@@ -1,16 +1,34 @@
 # frozen_string_literal: true
 
 module HighLevel
+  # Faraday middleware that implements the HighLevel client's request
+  # pipeline: instrumentation, 401-refresh, authentication, and typed
+  # error mapping.
   module Middleware
+    # Injects the +Authorization+ and +Version+ headers. When the
+    # request carries a {CONTEXT_KEY} entry in its Faraday options
+    # context (set by generated resource methods), the bearer token is
+    # resolved through {TokenResolver}; otherwise it falls back to a
+    # simple credential-priority chain.
     class Authentication < Faraday::Middleware
+      # The request-options context key under which generated resource
+      # code stashes the operation's security requirements.
       CONTEXT_KEY = :high_level_security
 
+      # @param app [#call] the next middleware in the stack
+      # @param config [HighLevel::Configuration] the client configuration
+      # @param resolver [HighLevel::TokenResolver, nil] an explicit
+      #   resolver; built from +config+/+storage+ when omitted
+      # @param storage [HighLevel::Storage::Base, nil] session storage,
+      #   used only when +resolver+ is not supplied
       def initialize(app, config:, resolver: nil, storage: nil)
         super(app)
         @config = config
         @resolver = resolver || TokenResolver.new(config: config, storage: storage)
       end
 
+      # Faraday request callback. Sets the +Version+ header and, unless
+      # one is already present, an +Authorization: Bearer+ header.
       def on_request(env)
         env.request_headers["Version"] ||= @config.api_version
         return if env.request_headers["Authorization"]

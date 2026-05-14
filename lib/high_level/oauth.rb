@@ -9,7 +9,9 @@ module HighLevel
   # class owns its own Faraday connection rather than reusing the main
   # client's (which is JSON-encoded).
   class Oauth
+    # Base URL for the marketplace authorization page.
     MARKETPLACE_URL = "https://marketplace.gohighlevel.com"
+    # The accepted +user_type+ values for the token endpoints.
     USER_TYPES = %w[Location Company].freeze
 
     def initialize(config:)

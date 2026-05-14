@@ -3,6 +3,8 @@
 require "faraday"
 require "zeitwerk"
 
+# Ruby SDK for the HighLevel (GoHighLevel) API. Start with
+# {HighLevel::Client}.
 module HighLevel
 end
 
