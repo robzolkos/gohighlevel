@@ -62,6 +62,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vendor/openapi/` is entirely gitignored; `script/fetch_specs.rb`
   itself is the canonical pin. `CONTRIBUTING.md` documents the sync +
   bump workflow.
+- Documentation + instrumentation (Phase 12): `README.md` covers
+  install, quickstart, the four auth modes, OAuth flows, storage
+  backends, webhook verification (Sinatra + Rails examples),
+  pagination, the typed error hierarchy, instrumentation, and the
+  differences from the TypeScript SDK. YARD docstrings on every
+  hand-written class, module, constant, and public method — `yard doc`
+  is 100% documented with no warnings (`.yardopts` scopes the doc run
+  to hand-written code; generated resources/models carry their own
+  per-method comments from the OpenAPI spec). New
+  `HighLevel::Middleware::Instrumentation` makes the previously-inert
+  `Configuration#instrumenter` slot real: it emits a
+  `request.high_level` event (`:method`, `:url`, `:status`) around
+  every request when an instrumenter is configured, and is a
+  transparent pass-through otherwise.
 - Pagination helper (Phase 11): `HighLevel::Pagination.each_page` and
   `each_item` — opt-in, never bundled into the generated resource
   methods (the API has no uniform pagination convention). The caller

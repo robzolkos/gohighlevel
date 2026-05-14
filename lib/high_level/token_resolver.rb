@@ -18,15 +18,25 @@ module HighLevel
   #        else storage(resource_id), else raise.
   #   5. No specific requirements: storage(resource_id), else raise.
   class TokenResolver
+    # The outcome of {#resolve}: the bearer token and the +:source+
+    # symbol it came from (+:private_integration_token+,
+    # +:agency_access_token+, +:location_access_token+, or +:storage+).
     Result = Data.define(:token, :source)
 
+    # OpenAPI security requirement: agency token only.
     AGENCY_ONLY    = "Agency-Access-Only"
+    # OpenAPI security requirement: location token only.
     LOCATION_ONLY  = "Location-Access-Only"
+    # OpenAPI security requirement: agency token (flexible).
     AGENCY_ACCESS  = "Agency-Access"
+    # OpenAPI security requirement: location token (flexible).
     LOCATION_ACCESS = "Location-Access"
+    # OpenAPI security requirement: generic bearer (location-style).
     BEARER = "bearer"
 
+    # Security requirements that call for a location-level token.
     LOCATION_REQS = [LOCATION_ACCESS, LOCATION_ONLY, BEARER].freeze
+    # Security requirements that call for an agency-level token.
     AGENCY_REQS   = [AGENCY_ACCESS, AGENCY_ONLY].freeze
 
     def initialize(config:, storage: nil)

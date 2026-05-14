@@ -1,0 +1,21 @@
+--markup markdown
+--readme README.md
+--no-private
+--output-dir doc
+lib/gohighlevel.rb
+lib/high_level.rb
+lib/high_level/version.rb
+lib/high_level/errors.rb
+lib/high_level/configuration.rb
+lib/high_level/client.rb
+lib/high_level/oauth.rb
+lib/high_level/token_resolver.rb
+lib/high_level/token_refresher.rb
+lib/high_level/webhooks.rb
+lib/high_level/pagination.rb
+lib/high_level/middleware/*.rb
+lib/high_level/storage/*.rb
+lib/high_level/resources/base.rb
+-
+CHANGELOG.md
+CONTRIBUTING.md

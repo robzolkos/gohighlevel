@@ -23,8 +23,11 @@ module HighLevel
   # (verifySignature + verifyEd25519Signature) cross-checked with the
   # published HighLevel webhook docs.
   module Webhooks
+    # The supported signature schemes.
     SCHEMES = %i[rsa ed25519].freeze
 
+    # Raised by {Webhooks.verify} when a payload fails verification for
+    # any reason — bad signature, wrong key, malformed input.
     class InvalidSignatureError < HighLevel::Error; end
 
     # Verify a webhook signature. Returns true on success; raises

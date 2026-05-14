@@ -1,9 +1,26 @@
 # frozen_string_literal: true
 
 module HighLevel
+  # The entry point for the SDK. Construct one with credentials, then
+  # reach each API app as a resource: +client.contacts+,
+  # +client.calendars+, and so on (see +RESOURCE_REGISTRY+). OAuth flows
+  # live on +client.oauth+.
+  #
+  # @!attribute [r] config
+  #   @return [HighLevel::Configuration] the resolved, immutable configuration
+  # @!attribute [r] connection
+  #   @return [Faraday::Connection] the underlying HTTP connection with the
+  #     full middleware stack
+  # @!attribute [r] oauth
+  #   @return [HighLevel::Oauth] the OAuth flow client
   class Client
     attr_reader :config, :connection, :oauth
 
+    # @param config [HighLevel::Configuration, Hash, nil] a configuration
+    #   object, a hash of configuration options, or nil to build one
+    #   entirely from keyword arguments
+    # @param opts [Hash] configuration options, merged over +config+
+    # @raise [ConfigurationError] when no usable credentials are supplied
     def initialize(config = nil, **opts)
       @config = coerce_config(config, opts)
       validate!
@@ -12,10 +29,13 @@ module HighLevel
       @connection = build_connection
     end
 
+    # @return [Boolean] whether +name+ is a registered resource accessor
     def respond_to_missing?(name, include_private = false)
       RESOURCE_REGISTRY.key?(name) || super
     end
 
+    # Resolves +client.<app>+ to a memoized resource instance via
+    # +RESOURCE_REGISTRY+.
     def method_missing(name, *args, **kwargs, &block)
       klass = RESOURCE_REGISTRY[name]
       return super unless klass && args.empty? && kwargs.empty? && block.nil?
@@ -66,8 +86,12 @@ module HighLevel
     def build_connection
       resolver = TokenResolver.new(config: @config, storage: @config.session_storage)
       refresher = TokenRefresher.new(config: @config, oauth: @oauth, storage: @config.session_storage)
+      build_faraday(resolver, refresher)
+    end
 
+    def build_faraday(resolver, refresher)
       Faraday.new(url: @config.base_url) do |f|
+        f.use Middleware::Instrumentation, instrumenter: @config.instrumenter
         f.use Middleware::RefreshOn401, refresher: refresher, resolver: resolver
         f.use Middleware::Authentication, config: @config, resolver: resolver
         f.request :json

@@ -2,7 +2,12 @@
 
 module HighLevel
   module Middleware
+    # Maps non-2xx responses to typed {HighLevel::Error} subclasses,
+    # raising one with the response's status, body, and request id.
     class ErrorHandler < Faraday::Middleware
+      # HTTP status code to exception class. Unmapped 5xx codes raise
+      # {HighLevel::ServerError}; any other unmapped non-2xx raises the
+      # base {HighLevel::Error}.
       STATUS_MAP = {
         400 => HighLevel::BadRequestError,
         401 => HighLevel::UnauthorizedError,
@@ -12,6 +17,8 @@ module HighLevel
         429 => HighLevel::RateLimitError
       }.freeze
 
+      # Faraday response callback. Raises the mapped error for any
+      # non-2xx status; a no-op otherwise.
       def on_complete(env)
         return if env.status.between?(200, 299)
 

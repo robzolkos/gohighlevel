@@ -15,6 +15,7 @@ module HighLevel
     #                        expire_at DATETIME, created_at, updated_at)
     # with a unique index on (application_id, resource_id).
     class ActiveRecord < Base
+      # The backing table name.
       TABLE_NAME = "gohighlevel_sessions"
 
       # Persisted session row. Stored as a plain JSON string in `payload`
@@ -29,6 +30,9 @@ module HighLevel
       module Migration
         module_function
 
+        # Create the +gohighlevel_sessions+ table if it does not exist.
+        # @param connection [ActiveRecord::ConnectionAdapters::AbstractAdapter]
+        # @return [void]
         def create_table!(connection = ::ActiveRecord::Base.connection)
           return if connection.table_exists?(TABLE_NAME)
 
@@ -43,26 +47,31 @@ module HighLevel
         end
       end
 
+      # @param model [Class] the ActiveRecord model class to persist through
       def initialize(model: Session)
         super()
         @model = model
         @client_id = nil
       end
 
+      # (see Base#init)
       def init
         # No-op — assumes the user has run the migration.
       end
 
+      # (see Base#disconnect)
       def disconnect
         # No-op — AR pools are managed by the host app.
       end
 
+      # (see Base#set_client_id)
       def set_client_id(client_id)
         raise ArgumentError, "client_id is required" if client_id.nil? || client_id.to_s.empty?
 
         @client_id = client_id.to_s
       end
 
+      # (see Base#set_session)
       def set_session(resource_id, session_data)
         data = symbolize_keys(session_data)
         document = data.merge(expire_at: calculate_expire_at(data[:expires_in]))
@@ -74,6 +83,7 @@ module HighLevel
         nil
       end
 
+      # (see Base#get_session)
       def get_session(resource_id)
         row = @model.find_by(application_id: application_id, resource_id: resource_id)
         return nil if row.nil?
@@ -81,11 +91,13 @@ module HighLevel
         JSON.parse(row.payload, symbolize_names: true)
       end
 
+      # (see Base#get_access_token)
       def get_access_token(resource_id)
         session = get_session(resource_id)
         session && session[:access_token]
       end
 
+      # (see Base#delete_session)
       def delete_session(resource_id)
         @model.where(application_id: application_id, resource_id: resource_id).delete_all
         nil

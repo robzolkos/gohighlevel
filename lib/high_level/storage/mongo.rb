@@ -13,8 +13,13 @@ module HighLevel
     # `{application_id, resource_id}` unique index. `expire_at` carries
     # a TTL index so MongoDB auto-purges expired sessions.
     class Mongo < Base
+      # The MongoDB collection name; matches the TS SDK for cross-SDK
+      # store sharing.
       COLLECTION = "gohighlevel_sessions"
 
+      # @param client [::Mongo::Client, nil] an existing client, or nil
+      #   to build one from +client_options+
+      # @param client_options [Hash] +:url+ plus any +::Mongo::Client+ options
       def initialize(client: nil, **client_options)
         super()
         @client = client || ::Mongo::Client.new(client_options[:url] || "mongodb://localhost:27017/gohighlevel",
@@ -23,20 +28,24 @@ module HighLevel
         @indexes_ensured = false
       end
 
+      # (see Base#init)
       def init
         ensure_indexes!
       end
 
+      # (see Base#disconnect)
       def disconnect
         @client.close
       end
 
+      # (see Base#set_client_id)
       def set_client_id(client_id)
         raise ArgumentError, "client_id is required" if client_id.nil? || client_id.to_s.empty?
 
         @client_id = client_id.to_s
       end
 
+      # (see Base#set_session)
       # rubocop:disable Metrics/MethodLength
       def set_session(resource_id, session_data)
         ensure_indexes!
@@ -57,6 +66,7 @@ module HighLevel
       end
       # rubocop:enable Metrics/MethodLength
 
+      # (see Base#get_session)
       def get_session(resource_id)
         doc = collection.find(application_id: application_id, resource_id: resource_id).first
         return nil if doc.nil?
@@ -64,11 +74,13 @@ module HighLevel
         symbolize_keys(doc).except(:_id, :application_id, :resource_id, :created_at, :updated_at)
       end
 
+      # (see Base#get_access_token)
       def get_access_token(resource_id)
         session = get_session(resource_id)
         session && session[:access_token]
       end
 
+      # (see Base#delete_session)
       def delete_session(resource_id)
         collection.delete_one(application_id: application_id, resource_id: resource_id)
         nil

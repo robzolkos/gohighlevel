@@ -8,14 +8,21 @@ module HighLevel
     # The retry is marked via env.request.context so a second 401 cannot
     # loop.
     class RefreshOn401 < Faraday::Middleware
+      # Request-options context key marking that a refresh+retry has
+      # already been attempted, so a second 401 cannot loop.
       RETRY_FLAG = :high_level_refresh_attempted
 
+      # @param app [#call] the next middleware in the stack
+      # @param refresher [HighLevel::TokenRefresher] resolves a fresh token
+      # @param resolver [HighLevel::TokenResolver] extracts the resource id
+      #   from the failed request
       def initialize(app, refresher:, resolver:)
         super(app)
         @refresher = refresher
         @resolver = resolver
       end
 
+      # Invokes the downstream stack; on a 401 attempts one refresh+retry.
       def call(env)
         @app.call(env)
       rescue HighLevel::UnauthorizedError => e
