@@ -62,6 +62,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vendor/openapi/` is entirely gitignored; `script/fetch_specs.rb`
   itself is the canonical pin. `CONTRIBUTING.md` documents the sync +
   bump workflow.
+- Pagination helper (Phase 11): `HighLevel::Pagination.each_page` and
+  `each_item` — opt-in, never bundled into the generated resource
+  methods (the API has no uniform pagination convention). The caller
+  passes any `#call`-able (a bound resource method, or a proc that
+  routes pagination params into `body:`), declares the `cursor_field`
+  (`:offset`, `:skip`, ...), and optionally an `items_field` for
+  Hash-shaped responses. Walks pages until a short or empty page;
+  returns an `Enumerator` when called without a block.
 - Additional storage backends (Phase 10): `HighLevel::Storage::Redis`,
   `HighLevel::Storage::ActiveRecord`, `HighLevel::Storage::Mongo`. Each
   lazy-requires its gem dependency (`redis`, `active_record`, `mongo`)
