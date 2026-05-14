@@ -14,150 +14,47 @@ First public release. Built against the HighLevel OpenAPI spec pinned at
 pinned at `b1a1454b8b7e355037abf57161cd80cedfc8b3cc`.
 
 ### Added
-- Initial gem skeleton (Phase 0): gemspec, Bundler, Zeitwerk loader, RSpec,
-  RuboCop, SimpleCov, MIT license.
-- Core HTTP client (Phase 1): `HighLevel::Configuration` (immutable `Data`),
-  `HighLevel::Client` building a Faraday connection, `Authentication` and
-  `ErrorHandler` middleware, and a typed exception hierarchy
-  (`Error`, `ConfigurationError`, `NetworkError`, `BadRequestError`,
+
+- **Core client.** `HighLevel::Client` builds a Faraday connection with a
+  full middleware stack; `HighLevel::Configuration` is an immutable `Data`
+  carrying every collaborator (no global mutable state). Non-2xx responses
+  raise a typed exception hierarchy (`Error` and its subclasses
+  `ConfigurationError`, `NetworkError`, `BadRequestError`,
   `UnauthorizedError`, `ForbiddenError`, `NotFoundError`,
-  `UnprocessableEntityError`, `RateLimitError`, `ServerError`).
-- Token resolver (Phase 2): `HighLevel::TokenResolver` ports
-  `getTokenForSecurity` + `extractResourceId` from the official TypeScript
-  SDK (vendor/highlevel-api-sdk @ b1a1454). `Middleware::Authentication`
-  now consults the resolver per-request when generated code passes a
-  security context, falling back to the simple priority chain when none is
-  provided. Fixture matrix in `test/fixtures/token_resolution.json` covers
-  every priority branch and resource-id extraction case. `script/fetch_ts_sdk.sh`
-  pins the TS SDK to a reproducible SHA.
-- Session storage (Phase 3): `HighLevel::Storage::Base` defines the
-  seven-method backend contract (`init`, `disconnect`, `set_client_id`,
-  `set_session`, `get_session`, `get_access_token`, `delete_session`).
-  `HighLevel::Storage::Memory` is the default, thread-safe via Monitor,
-  application-scoped via the client_id prefix. `HighLevel::Client.new` now
-  initializes the configured storage and propagates the client_id when
-  OAuth credentials are present. `test/support/session_storage_contract.rb`
-  is the shared Minitest module future backends will include.
-- OAuth + 401 refresh (Phase 4): `HighLevel::Oauth` implements the four
-  OAuth flows directly from the
-  [GoHighLevel OAuth docs](https://marketplace.gohighlevel.com/docs/ghl/oauth/) —
-  `authorization_url`, `exchange_code`, `refresh_token`,
-  `get_location_access_token`. Form-encoded bodies over a dedicated
-  Faraday connection. `HighLevel::TokenRefresher` encapsulates the
-  recovery policy (direct refresh + location-token-from-company-token
-  fallback for behavioral parity with the TS SDK's
-  `handleLocationTokenFallback`). `HighLevel::Middleware::RefreshOn401`
-  rescues `UnauthorizedError`, asks the refresher for a new token,
-  rewrites the Authorization header, and retries once; a context-marked
-  retry flag prevents loops. `Configuration` gains a `redirect_uri`
-  field. `Client#oauth` is exposed.
-- Webhook verification (Phase 5): `HighLevel::Webhooks.verify(payload:,
-  signature:, public_key:, scheme:)` supports both `:rsa` (RSA-SHA256,
-  arrives on `x-wh-signature`) and `:ed25519` (arrives on
-  `x-ghl-signature`). Both schemes use Ruby's stdlib `OpenSSL` — no
-  `rbnacl` dep needed in Ruby 3.3+. Raises
-  `HighLevel::Webhooks::InvalidSignatureError` on any failure mode
-  (tampered body, wrong key, malformed base64, missing inputs).
-  `base64` added as an explicit runtime dep (no longer default-gem in
-  Ruby 3.4+).
-- Spec sync infrastructure (Phase 6): `script/fetch_specs.rb` clones
-  `GoHighLevel/highlevel-api-docs` at a pinned SHA into
-  `vendor/openapi/` and writes `vendor/openapi/VERSION` (SHA +
-  fetched_at + source URL). Idempotent — re-running at the same pin is
-  a true no-op (no file writes). `bin/sync-spec` is the thin wrapper.
-  `vendor/openapi/` is entirely gitignored; `script/fetch_specs.rb`
-  itself is the canonical pin. `CONTRIBUTING.md` documents the sync +
-  bump workflow.
-- CI + release prep (Phase 13): `.github/workflows/ci.yml` runs the
-  test suite on a Ruby 3.3/3.4 matrix, plus rubocop, a YARD
-  warnings-fail job, and a `gem build` smoke job. `.github/dependabot.yml`
-  schedules weekly Bundler + GitHub Actions updates. `bin/console`
-  drops into IRB with the gem loaded. Gem name `gohighlevel` confirmed
-  available on rubygems.org.
-- Fixed a latent load bug surfaced by the `gem build` trial: `version.rb`
-  defines `VERSION` (not the `Version` constant Zeitwerk's naming
-  convention expects), so the installed gem couldn't autoload it. It
-  only worked in development because the gemspec eagerly requires
-  `version.rb`. `lib/high_level.rb` now requires `version.rb` eagerly
-  (Zeitwerk-ignored) alongside `errors.rb` and `resource_registry.rb`.
-- Documentation + instrumentation (Phase 12): `README.md` covers
-  install, quickstart, the four auth modes, OAuth flows, storage
-  backends, webhook verification (Sinatra + Rails examples),
-  pagination, the typed error hierarchy, instrumentation, and the
-  differences from the TypeScript SDK. YARD docstrings on every
-  hand-written class, module, constant, and public method — `yard doc`
-  is 100% documented with no warnings (`.yardopts` scopes the doc run
-  to hand-written code; generated resources/models carry their own
-  per-method comments from the OpenAPI spec). New
-  `HighLevel::Middleware::Instrumentation` makes the previously-inert
-  `Configuration#instrumenter` slot real: it emits a
-  `request.high_level` event (`:method`, `:url`, `:status`) around
-  every request when an instrumenter is configured, and is a
-  transparent pass-through otherwise.
-- Pagination helper (Phase 11): `HighLevel::Pagination.each_page` and
-  `each_item` — opt-in, never bundled into the generated resource
-  methods (the API has no uniform pagination convention). The caller
-  passes any `#call`-able (a bound resource method, or a proc that
-  routes pagination params into `body:`), declares the `cursor_field`
-  (`:offset`, `:skip`, ...), and optionally an `items_field` for
-  Hash-shaped responses. Walks pages until a short or empty page;
-  returns an `Enumerator` when called without a block.
-- Additional storage backends (Phase 10): `HighLevel::Storage::Redis`,
-  `HighLevel::Storage::ActiveRecord`, `HighLevel::Storage::Mongo`. Each
-  lazy-requires its gem dependency (`redis`, `active_record`, `mongo`)
-  on first reference — none are added to the gem's runtime
-  dependencies, so users only pay for what they use. Redis keys are
-  TTL-scoped by `expires_in`. ActiveRecord ships a tiny `Migration`
-  helper for the `gohighlevel_sessions` table + unique
-  `(application_id, resource_id)` index. Mongo creates a TTL index on
-  `expire_at` so the server purges expired sessions; collection name +
-  schema match the TS SDK's MongoSessionStorage so a polyglot
-  deployment can share a single store. All three include
-  `SessionStorageContract` in their tests. Memory's
-  `disconnect_clears_sessions` test moved off the contract (it's
-  Memory-specific behavior; remote stores keep persisting after a
-  client disconnect). Mongo's test skips unless `MONGO_URL` is set
-  *and* the gem is installed. `script/drift_check.rb` (wrapped by the
-  `ghl-drift-check` skill) snapshots the generated tree, regenerates,
-  diffs, then restores the working tree to its pre-run state.
-  Default mode regenerates against the currently-pinned OpenAPI SHA
-  (catches "forgot to commit a regen"). `--upstream` mode temporarily
-  checks out `vendor/openapi/` at upstream HEAD, regenerates, and
-  diffs (catches "API changed, time to bump"). Always safe to re-run:
-  the working tree is byte-identical regardless of outcome.
-  `.github/workflows/drift-check.yml` runs the upstream check weekly
-  (Mondays 13:00 UTC) and on manual dispatch; on drift it opens an
-  `upstream-drift` GitHub issue (or comments on the existing open one).
-  CONTRIBUTING.md documents both modes.
-- All 41 resources generated + wired (Phase 8): regenerated the full
-  resource layer (~1000 generated files) and wired access via a
-  generated `HighLevel::RESOURCE_REGISTRY` constant. `Client` uses
-  `method_missing` + `respond_to_missing?` to dispatch `client.<app>`
-  to the corresponding `Resources::*` class lazily and memoize the
-  instance. Three generator bugs surfaced and fixed during the scale-up:
-  hyphen-containing app/operation names (snake_case'd at filename and
-  identifier level for Zeitwerk), parameter names colliding with Ruby
-  keywords (`end` etc., suffixed with `_`), and duplicate path-vs-query
-  parameters on the same operation (deduped, path wins). One spec is
-  intentionally skipped: `oauth` is hand-written (`HighLevel::Oauth`,
-  Phase 4) because the form-encoded transport differs from the
-  generator's JSON template; the skip is declared in
-  `Generator::SKIP_APPS`. Registry test asserts every spec under
-  `vendor/openapi/apps/` (minus skips) has a registry entry, that each
-  resource subclasses `Resources::Base`, and that every client accessor
-  returns an instance of the correct class.
-- Resource generator + first emitted resource (Phase 7):
-  `script/generate.rb` (wrapped by `bin/generate` and the `ghl-generate`
-  skill) consumes a vendored OpenAPI app spec and emits
-  `lib/high_level/resources/<app>.rb` + `lib/high_level/models/<app>/*.rb`.
-  Generated method shape: snake_case operation name, required kwargs
-  for path params, optional kwargs for query/header params, optional
-  `body:` when `requestBody` is declared, `**_opts` catch-all, and a
-  delegate to `HighLevel::Resources::Base#request(method:, path:,
-  security:, ...)`. The Base runtime sets the request's
-  `:high_level_security` context so the existing Authentication
-  middleware picks per-op security requirements. Generator runs
-  `rubocop -A` as a post-step. First emission: contacts (32 operations,
-  61 models). `client.contacts` is the live entry point. Smoke test
-  covers method dispatch, path interpolation, query params, body
-  encoding, and the operation count vs. spec.
+  `UnprocessableEntityError`, `RateLimitError`, `ServerError`) carrying
+  `#status`, `#response_body`, and `#request_id`.
+- **Authentication.** Four credential modes — private integration token,
+  agency token, location token, and OAuth client credentials.
+  `HighLevel::TokenResolver` resolves the right bearer token per request
+  from the operation's OpenAPI security requirements, falling back to a
+  simple credential-priority chain.
+- **OAuth flows + 401 refresh.** `HighLevel::Oauth` implements
+  `authorization_url`, `exchange_code`, `refresh_token`, and
+  `get_location_access_token` (form-encoded, on a dedicated connection).
+  `HighLevel::Middleware::RefreshOn401` transparently refreshes and
+  retries once on a 401, including the location-token-from-company-token
+  fallback, with a retry guard so a second 401 can't loop.
+- **Session storage.** `HighLevel::Storage::Memory` (the thread-safe
+  default), plus `Redis`, `ActiveRecord`, and `Mongo` backends — each
+  lazy-requires its gem dependency, so none are runtime dependencies of
+  the SDK. All implement the `HighLevel::Storage::Base` seven-method
+  contract.
+- **Webhook verification.** `HighLevel::Webhooks.verify` supports `:rsa`
+  (RSA-SHA256, `x-wh-signature`) and `:ed25519` (`x-ghl-signature`)
+  schemes using stdlib `OpenSSL`. Returns `true` or raises
+  `HighLevel::Webhooks::InvalidSignatureError`.
+- **Pagination.** `HighLevel::Pagination.each_page` / `each_item` — opt-in
+  helpers (the API has no uniform pagination convention), handling both
+  the limit/offset and limit/skip styles, returning an `Enumerator` when
+  called without a block.
+- **Generated resource layer.** 40 resource classes covering 700+
+  endpoints, generated from the official OpenAPI spec and committed to
+  the repo. Each `client.<app>` accessor (`client.contacts`,
+  `client.calendars`, ...) is wired through `HighLevel::RESOURCE_REGISTRY`.
+- **Instrumentation.** `Configuration#instrumenter` (e.g.
+  `ActiveSupport::Notifications`) receives a `request.high_level` event
+  around every request; a transparent pass-through when unset.
+- **Tooling.** `bin/sync-spec` (pin + vendor the OpenAPI spec),
+  `bin/generate` (regenerate the resource layer), `bin/console` (IRB with
+  the gem loaded). `script/drift_check.rb` and a weekly GitHub Actions
+  cron catch upstream API drift. CI runs the suite on Ruby 3.3 and 3.4.

@@ -5,7 +5,7 @@ description: Regenerate the gem's resource and model layer (`lib/high_level/reso
 
 # ghl-generate
 
-Wraps `script/generate.rb`. Idempotent: regenerating against the same spec SHA produces byte-identical output, which is the contract the drift check (Phase 9) relies on.
+Wraps `script/generate.rb`. Idempotent: regenerating against the same spec SHA produces byte-identical output, which is the contract the `ghl-drift-check` skill relies on.
 
 ## When to run
 
@@ -55,7 +55,7 @@ Every emitted file carries the header:
 
 ## Idempotency
 
-Running the generator twice against the same `vendor/openapi/VERSION` produces no file changes. The drift-check skill (Phase 9) will rely on this.
+Running the generator twice against the same `vendor/openapi/VERSION` produces no file changes. The `ghl-drift-check` skill relies on this.
 
 ## Failure modes
 

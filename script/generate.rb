@@ -10,7 +10,7 @@
 #
 # Output lands under lib/high_level/resources/<app>.rb and
 # lib/high_level/models/<app>/*.rb. Re-running with the same spec SHA is
-# byte-identical (idempotent); the drift check (Phase 9) relies on that.
+# byte-identical (idempotent); script/drift_check.rb relies on that.
 
 require "json"
 require "fileutils"
@@ -27,8 +27,8 @@ class Generator
   SKIP_HEADER_PARAMS = %w[Version version].freeze
 
   # Apps shipped as hand-written code rather than generated. The OAuth
-  # spec is covered by HighLevel::Oauth (Phase 4) which owns the flows
-  # plus the form-encoded transport — the generic generator would emit a
+  # spec is covered by HighLevel::Oauth, which owns the flows plus the
+  # form-encoded transport — the generic generator would emit a
   # JSON-encoded resource that's wire-incompatible.
   SKIP_APPS = %w[oauth].freeze
 

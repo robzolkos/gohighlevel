@@ -2,8 +2,9 @@
 
 ## Working with the vendored OpenAPI spec
 
-The Ruby resource layer (Phases 7-8 of `PLAN.md`) is generated from the
-official HighLevel OpenAPI spec at
+The Ruby resource layer (`lib/high_level/resources/` and
+`lib/high_level/models/`) is generated from the official HighLevel
+OpenAPI spec at
 [`GoHighLevel/highlevel-api-docs`](https://github.com/GoHighLevel/highlevel-api-docs).
 That repo is **pinned to a SHA** in `script/fetch_specs.rb` and fetched
 on demand into `vendor/openapi/`.
@@ -28,9 +29,9 @@ Re-running with the same SHA is a no-op (no file writes).
 2. Edit `PIN_SHA` in `script/fetch_specs.rb`.
 3. Run `bin/sync-spec`. The vendored copy advances to the new SHA and
    `vendor/openapi/VERSION` is rewritten.
-4. Regenerate the resource layer (Phase 7+):
+4. Regenerate the resource layer:
    ```bash
-   bin/generate    # added in Phase 7
+   bin/generate
    ```
 5. Run the full suite — `bundle exec rake`.
 6. Commit `script/fetch_specs.rb` + `vendor/openapi/VERSION` + any
