@@ -62,7 +62,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vendor/openapi/` is entirely gitignored; `script/fetch_specs.rb`
   itself is the canonical pin. `CONTRIBUTING.md` documents the sync +
   bump workflow.
-- Drift check + CI (Phase 9): `script/drift_check.rb` (wrapped by the
+- Additional storage backends (Phase 10): `HighLevel::Storage::Redis`,
+  `HighLevel::Storage::ActiveRecord`, `HighLevel::Storage::Mongo`. Each
+  lazy-requires its gem dependency (`redis`, `active_record`, `mongo`)
+  on first reference — none are added to the gem's runtime
+  dependencies, so users only pay for what they use. Redis keys are
+  TTL-scoped by `expires_in`. ActiveRecord ships a tiny `Migration`
+  helper for the `gohighlevel_sessions` table + unique
+  `(application_id, resource_id)` index. Mongo creates a TTL index on
+  `expire_at` so the server purges expired sessions; collection name +
+  schema match the TS SDK's MongoSessionStorage so a polyglot
+  deployment can share a single store. All three include
+  `SessionStorageContract` in their tests. Memory's
+  `disconnect_clears_sessions` test moved off the contract (it's
+  Memory-specific behavior; remote stores keep persisting after a
+  client disconnect). Mongo's test skips unless `MONGO_URL` is set
+  *and* the gem is installed. `script/drift_check.rb` (wrapped by the
   `ghl-drift-check` skill) snapshots the generated tree, regenerates,
   diffs, then restores the working tree to its pre-run state.
   Default mode regenerates against the currently-pinned OpenAPI SHA

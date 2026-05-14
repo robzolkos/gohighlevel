@@ -14,6 +14,13 @@ module HighLevel
         @storage.init
       end
 
+      def test_disconnect_clears_sessions
+        @storage.set_session("res-1", access_token: "tok-1")
+        @storage.disconnect
+
+        assert_nil @storage.get_session("res-1")
+      end
+
       def test_sessions_are_scoped_by_application_id
         @storage.set_session("res-1", access_token: "from-app-test")
 

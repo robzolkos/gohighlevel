@@ -11,4 +11,10 @@ group :development, :test do
   gem "simplecov", "~> 0.22", require: false
   gem "webmock", "~> 3.20"
   gem "yard", "~> 0.9"
+
+  # Storage backends — runtime-optional for users; required here so the
+  # backend contract tests exercise each one.
+  gem "activerecord", "~> 8.0"
+  gem "redis", "~> 5.0"
+  gem "sqlite3", "~> 2.0"
 end
