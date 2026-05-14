@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "A Ruby SDK for the HighLevel (GoHighLevel) API, generated from the " \
                      "official OpenAPI spec with runtime behavior validated against the " \
                      "official TypeScript SDK."
-  spec.homepage = "https://github.com/rzolkos/gohighlevel"
+  spec.homepage = "https://github.com/robzolkos/gohighlevel"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.3"
 
