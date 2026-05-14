@@ -38,6 +38,20 @@ Re-running with the same SHA is a no-op (no file writes).
    `lib/high_level/models/**` changes in one commit. The diff against
    master is the reviewable contract.
 
+### Drift check
+
+```bash
+ruby script/drift_check.rb            # is committed code in sync with the pinned spec?
+ruby script/drift_check.rb --upstream # does upstream HEAD have changes we should bump to?
+```
+
+The check is always **safe to re-run**: it snapshots the watched paths, regenerates, diffs, then restores the working tree to its pre-run state. Exit 1 means drift; the output lists differing files. Resolution:
+
+- Local mode drift → `bin/generate` and commit the regenerated diff.
+- Upstream mode drift → bump `PIN_SHA` (see above) and regenerate.
+
+A weekly GitHub Actions cron runs the upstream check and opens an `upstream-drift` issue if it finds changes.
+
 ### Reference TS SDK pin
 
 `vendor/highlevel-api-sdk/` (pinned via `script/fetch_ts_sdk.sh`) is a

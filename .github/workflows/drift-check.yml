@@ -1,0 +1,72 @@
+name: drift-check
+
+on:
+  schedule:
+    # Mondays at 13:00 UTC.
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  upstream-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Sync vendored OpenAPI specs
+        run: bin/sync-spec
+
+      - name: Compare against upstream HEAD
+        id: drift
+        run: |
+          if ruby script/drift_check.rb --upstream > drift.log 2>&1; then
+            echo "drift=false" >> "$GITHUB_OUTPUT"
+            cat drift.log
+          else
+            echo "drift=true" >> "$GITHUB_OUTPUT"
+            cat drift.log
+            exit 0
+          fi
+
+      - name: Open issue on drift
+        if: steps.drift.outputs.drift == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          TITLE="upstream-drift: OpenAPI spec changes detected ($DATE)"
+          BODY=$(cat <<EOF
+          The weekly drift check found that committed generated code no
+          longer matches what the generator would emit against upstream
+          HEAD of \`GoHighLevel/highlevel-api-docs\`.
+
+          To resolve, bump \`PIN_SHA\` in \`script/fetch_specs.rb\` to upstream
+          HEAD, then run \`bin/sync-spec && bin/generate\` and open a PR
+          with the regenerated diff.
+
+          Drift output:
+
+          \`\`\`
+          $(cat drift.log)
+          \`\`\`
+          EOF
+          )
+          # Don't open a duplicate if there's already an open drift issue.
+          existing=$(gh issue list --label upstream-drift --state open --json number --jq '.[0].number' || true)
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "Drift still present as of $DATE. See run for details."
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --label upstream-drift
+          fi
+
+      - name: Mark step failed if drift detected
+        if: steps.drift.outputs.drift == 'true'
+        run: exit 1

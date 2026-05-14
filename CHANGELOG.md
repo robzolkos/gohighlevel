@@ -62,6 +62,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vendor/openapi/` is entirely gitignored; `script/fetch_specs.rb`
   itself is the canonical pin. `CONTRIBUTING.md` documents the sync +
   bump workflow.
+- Drift check + CI (Phase 9): `script/drift_check.rb` (wrapped by the
+  `ghl-drift-check` skill) snapshots the generated tree, regenerates,
+  diffs, then restores the working tree to its pre-run state.
+  Default mode regenerates against the currently-pinned OpenAPI SHA
+  (catches "forgot to commit a regen"). `--upstream` mode temporarily
+  checks out `vendor/openapi/` at upstream HEAD, regenerates, and
+  diffs (catches "API changed, time to bump"). Always safe to re-run:
+  the working tree is byte-identical regardless of outcome.
+  `.github/workflows/drift-check.yml` runs the upstream check weekly
+  (Mondays 13:00 UTC) and on manual dispatch; on drift it opens an
+  `upstream-drift` GitHub issue (or comments on the existing open one).
+  CONTRIBUTING.md documents both modes.
 - All 41 resources generated + wired (Phase 8): regenerated the full
   resource layer (~1000 generated files) and wired access via a
   generated `HighLevel::RESOURCE_REGISTRY` constant. `Client` uses

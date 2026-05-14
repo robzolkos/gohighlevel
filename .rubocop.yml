@@ -22,16 +22,19 @@ Metrics/BlockLength:
     - "test/**/*"
     - "*.gemspec"
     - "Rakefile"
+    - "script/drift_check.rb"
 
 Metrics/MethodLength:
   Exclude:
     - "test/**/*"
     - "script/generate.rb"
+    - "script/drift_check.rb"
 
 Metrics/AbcSize:
   Exclude:
     - "test/**/*"
     - "script/generate.rb"
+    - "script/drift_check.rb"
 
 Metrics/ClassLength:
   Exclude:
