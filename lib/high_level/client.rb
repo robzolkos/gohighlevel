@@ -12,8 +12,16 @@ module HighLevel
       @connection = build_connection
     end
 
-    def contacts
-      @contacts ||= Resources::Contacts.new(self)
+    def respond_to_missing?(name, include_private = false)
+      RESOURCE_REGISTRY.key?(name) || super
+    end
+
+    def method_missing(name, *args, **kwargs, &block)
+      klass = RESOURCE_REGISTRY[name]
+      return super unless klass && args.empty? && kwargs.empty? && block.nil?
+
+      @resources ||= {}
+      @resources[name] ||= klass.new(self)
     end
 
     private

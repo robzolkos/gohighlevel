@@ -48,10 +48,6 @@ Metrics/PerceivedComplexity:
   Exclude:
     - "script/generate.rb"
 
-Naming/MethodParameterName:
-  Exclude:
-    - "script/generate.rb"
-
 Layout/LineLength:
   Exclude:
     - "lib/high_level/resources/**/*"
@@ -69,3 +65,14 @@ Naming/AccessorMethodName:
   Exclude:
     - "lib/high_level/storage/**/*"
     - "test/**/*"
+
+# Generated resources mirror the OpenAPI spec verbatim — we don't get to
+# rename parameters or operations to suit Ruby style.
+Naming/MethodParameterName:
+  Exclude:
+    - "lib/high_level/resources/**/*"
+    - "script/generate.rb"
+
+Naming/PredicatePrefix:
+  Exclude:
+    - "lib/high_level/resources/**/*"
