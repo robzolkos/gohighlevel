@@ -8,7 +8,7 @@
 #
 #   bin/release
 #
-# Requires: a clean working tree on `main`, and the `gh` CLI
+# Requires: a clean working tree on `master`, and the `gh` CLI
 # authenticated.
 
 require "open3"
@@ -55,7 +55,7 @@ end
 abort "✗ working tree not clean — commit or stash first" unless run("git", "status", "--porcelain").first.empty?
 
 branch = run!("git", "rev-parse", "--abbrev-ref", "HEAD")
-abort "✗ not on main (on #{branch})" unless branch == "main"
+abort "✗ not on master (on #{branch})" unless branch == "master"
 
 current = current_version
 last_tag, has_tag = run("git", "describe", "--tags", "--abbrev=0")
@@ -111,7 +111,7 @@ unless kind == :as_is
   write_version(new_version)
   run!("git", "add", VERSION_FILE)
   run!("git", "commit", "-m", "Release #{tag}")
-  run!("git", "push", "origin", "main")
+  run!("git", "push", "origin", "master")
 end
 
 run!("gh", "release", "create", tag, "--title", tag, "--notes-file", notes_file.path)
