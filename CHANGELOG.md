@@ -62,6 +62,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vendor/openapi/` is entirely gitignored; `script/fetch_specs.rb`
   itself is the canonical pin. `CONTRIBUTING.md` documents the sync +
   bump workflow.
+- CI + release prep (Phase 13): `.github/workflows/ci.yml` runs the
+  test suite on a Ruby 3.3/3.4 matrix, plus rubocop, a YARD
+  warnings-fail job, and a `gem build` smoke job. `.github/dependabot.yml`
+  schedules weekly Bundler + GitHub Actions updates. `bin/console`
+  drops into IRB with the gem loaded. Gem name `gohighlevel` confirmed
+  available on rubygems.org.
+- Fixed a latent load bug surfaced by the `gem build` trial: `version.rb`
+  defines `VERSION` (not the `Version` constant Zeitwerk's naming
+  convention expects), so the installed gem couldn't autoload it. It
+  only worked in development because the gemspec eagerly requires
+  `version.rb`. `lib/high_level.rb` now requires `version.rb` eagerly
+  (Zeitwerk-ignored) alongside `errors.rb` and `resource_registry.rb`.
 - Documentation + instrumentation (Phase 12): `README.md` covers
   install, quickstart, the four auth modes, OAuth flows, storage
   backends, webhook verification (Sinatra + Rails examples),
