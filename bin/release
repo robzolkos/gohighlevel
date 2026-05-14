@@ -1,0 +1,121 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Interactive release. Pick a version bump (or release the current
+# version as-is), curate notes drafted from the commit log, then commit,
+# push, and create the GitHub Release. The release.yml workflow
+# publishes to RubyGems on `release: published`.
+#
+#   bin/release
+#
+# Requires: a clean working tree on `main`, and the `gh` CLI
+# authenticated.
+
+require "open3"
+require "tempfile"
+
+ROOT = File.expand_path("..", __dir__)
+VERSION_FILE = File.join(ROOT, "lib/high_level/version.rb")
+
+def run(*cmd)
+  out, status = Open3.capture2e(*cmd, chdir: ROOT)
+  [out.strip, status.success?]
+end
+
+def run!(*cmd)
+  out, ok = run(*cmd)
+  abort "✗ command failed: #{cmd.join(" ")}\n#{out}" unless ok
+  out
+end
+
+def current_version
+  File.read(VERSION_FILE)[/VERSION\s*=\s*"([^"]+)"/, 1] or abort "✗ could not read VERSION"
+end
+
+def write_version(version)
+  body = File.read(VERSION_FILE)
+  File.write(VERSION_FILE, body.sub(/VERSION\s*=\s*"[^"]+"/, %(VERSION = "#{version}")))
+end
+
+def bump(version, part)
+  major, minor, patch = version.split(".").map(&:to_i)
+  case part
+  when :patch then "#{major}.#{minor}.#{patch + 1}"
+  when :minor then "#{major}.#{minor + 1}.0"
+  when :major then "#{major + 1}.0.0"
+  end
+end
+
+def prompt(message)
+  print message
+  $stdin.gets.to_s.strip
+end
+
+# --- preflight -------------------------------------------------------
+abort "✗ working tree not clean — commit or stash first" unless run("git", "status", "--porcelain").first.empty?
+
+branch = run!("git", "rev-parse", "--abbrev-ref", "HEAD")
+abort "✗ not on main (on #{branch})" unless branch == "main"
+
+current = current_version
+last_tag, has_tag = run("git", "describe", "--tags", "--abbrev=0")
+current_tag_exists = !run("git", "tag", "-l", "v#{current}").first.empty?
+
+puts "Current version: #{current}"
+puts "Last release:    #{has_tag ? last_tag : "(none)"}"
+puts
+
+# --- choose version --------------------------------------------------
+choices = []
+choices << [:as_is, current] unless current_tag_exists
+choices << [:patch, bump(current, :patch)]
+choices << [:minor, bump(current, :minor)]
+choices << [:major, bump(current, :major)]
+
+choices.each_with_index do |(kind, version), i|
+  label = kind == :as_is ? "release #{version} as-is" : "#{kind} → #{version}"
+  puts "  #{i + 1}) #{label}"
+end
+
+selection = prompt("\nSelect: ").to_i
+abort "✗ invalid selection" unless selection.between?(1, choices.size)
+kind, new_version = choices[selection - 1]
+tag = "v#{new_version}"
+
+# --- draft notes -----------------------------------------------------
+range = has_tag ? "#{last_tag}..HEAD" : "HEAD"
+log = run!("git", "log", range, "--format=- %s", "--no-merges")
+abort "✗ no commits since #{last_tag} — nothing to release" if log.empty?
+
+notes_file = Tempfile.new(["release-notes", ".md"])
+notes_file.write("#{log}\n")
+notes_file.close
+
+puts "\nDraft release notes (#{tag}):\n\n#{File.read(notes_file.path)}"
+case prompt("[a]ccept / [e]dit / [q]uit: ").downcase
+when "e"
+  system(ENV.fetch("EDITOR", "vi"), notes_file.path)
+when "q", ""
+  notes_file.unlink
+  abort "aborted — no changes made"
+end
+
+# --- confirm + execute ----------------------------------------------
+puts
+puts "About to:"
+puts "  • #{kind == :as_is ? "release current #{new_version}" : "bump version.rb → #{new_version}, commit, push"}"
+puts "  • create GitHub Release #{tag} (triggers publish to RubyGems)"
+abort "aborted — no changes made" unless prompt("\nProceed? [y/N]: ").downcase == "y"
+
+unless kind == :as_is
+  write_version(new_version)
+  run!("git", "add", VERSION_FILE)
+  run!("git", "commit", "-m", "Release #{tag}")
+  run!("git", "push", "origin", "main")
+end
+
+run!("gh", "release", "create", tag, "--title", tag, "--notes-file", notes_file.path)
+notes_file.unlink
+
+puts "\n✓ Released #{tag}. release.yml is now publishing to RubyGems —"
+puts "  watch it: gh run watch $(gh run list --workflow=release.yml --limit=1 --json databaseId --jq '.[0].databaseId')"

@@ -69,3 +69,26 @@ bundle exec ruby -Ilib -Itest test/path/to/some_test.rb   # one file
 
 Rubocop is intentionally limited in scope — run it only on changed
 `.rb` files. See `AGENTS.md`.
+
+## Releasing
+
+Releases go out via OIDC trusted publishing — GitHub Actions publishes
+the gem; no API key is stored anywhere. There is no `CHANGELOG.md`; the
+release notes on each [GitHub Release](https://github.com/robzolkos/gohighlevel/releases)
+are the changelog.
+
+**One-time setup:** on rubygems.org, add `robzolkos/gohighlevel` as a
+trusted publisher for the `release.yml` workflow. RubyGems supports a
+"pending" publisher, so this can be done before the first release.
+
+**Each release** is one command:
+
+```bash
+bin/release
+```
+
+It shows the current version, lets you pick `patch` / `minor` / `major`
+(or release the current version as-is), drafts notes from the commit
+log for you to accept or edit, then commits the version bump, pushes,
+and creates the GitHub Release. Publishing the gem to RubyGems happens
+automatically from there — `release.yml` fires on the published release.
