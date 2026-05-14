@@ -25,6 +25,15 @@ module HighLevel
       Client.new(config)
     end
 
+    def test_accepts_a_positional_hash_config
+      Client.new({ private_integration_token: "pit" })
+    end
+
+    def test_rejects_a_config_that_is_neither_configuration_nor_hash
+      error = assert_raises(ConfigurationError) { Client.new(42) }
+      assert_includes error.message, "expected HighLevel::Configuration or Hash"
+    end
+
     def test_initializes_session_storage
       storage = Storage::Memory.new
       Client.new(private_integration_token: "pit", session_storage: storage)

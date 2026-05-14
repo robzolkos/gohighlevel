@@ -105,6 +105,32 @@ module HighLevel
         assert_raises(UnauthorizedError) { client.connection.get("/contacts/abc") }
       end
 
+      def test_401_resolves_resource_id_from_query_string
+        @storage.set_session("loc-q",
+                             access_token: "old-tok",
+                             refresh_token: "ref-1",
+                             userType: "Location")
+
+        stub_request(:get, "#{BASE}/contacts/abc")
+          .with(query: { "locationId" => "loc-q" }, headers: { "Authorization" => "Bearer old-tok" })
+          .to_return(status: 401, body: "{}", headers: { "Content-Type" => "application/json" })
+        stub_request(:get, "#{BASE}/contacts/abc")
+          .with(query: { "locationId" => "loc-q" }, headers: { "Authorization" => "Bearer new-tok" })
+          .to_return(status: 200, body: '{"ok":true}', headers: { "Content-Type" => "application/json" })
+        stub_request(:post, "#{BASE}/oauth/token")
+          .to_return(
+            status: 200,
+            body: '{"access_token":"new-tok","refresh_token":"new-ref"}',
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        ctx = with_security_context(security: { security_requirements: ["Location-Access-Only"] })
+        response = @client.connection.get("/contacts/abc", { locationId: "loc-q" }, &ctx)
+
+        assert_equal 200, response.status
+        assert_equal "new-tok", @storage.get_access_token("loc-q")
+      end
+
       def test_401_after_refresh_still_401_does_not_loop
         @storage.set_session("loc-1",
                              access_token: "old-tok",
