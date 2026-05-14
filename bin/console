@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# An IRB session with the gem loaded. Build a client and poke at it:
+#
+#   client = HighLevel::Client.new(private_integration_token: "pit-...")
+#   client.contacts
+require "irb"
+require_relative "../lib/gohighlevel"
+
+IRB.start(__FILE__)
