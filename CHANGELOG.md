@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-05-14
+
+First public release. Built against the HighLevel OpenAPI spec pinned at
+`192cd68b065a7423c543d82721eb8644cdc883c7` and the official TypeScript SDK
+pinned at `b1a1454b8b7e355037abf57161cd80cedfc8b3cc`.
+
 ### Added
 - Initial gem skeleton (Phase 0): gemspec, Bundler, Zeitwerk loader, RSpec,
   RuboCop, SimpleCov, MIT license.
