@@ -17,5 +17,4 @@ lib/high_level/middleware/*.rb
 lib/high_level/storage/*.rb
 lib/high_level/resources/base.rb
 -
-CHANGELOG.md
 CONTRIBUTING.md
