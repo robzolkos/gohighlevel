@@ -150,5 +150,20 @@ module HighLevel
         )
       end
     end
+
+    def test_rsa_scheme_against_ed25519_key_wraps_openssl_error
+      # The :rsa path calls verify with a SHA256 digest; an Ed25519 key
+      # rejects digests outright and OpenSSL raises. We wrap that as
+      # InvalidSignatureError rather than letting OpenSSL::OpenSSLError leak.
+      error = assert_raises(Webhooks::InvalidSignatureError) do
+        Webhooks.verify(
+          payload: PAYLOAD,
+          signature: @rsa_signature,
+          public_key: @ed_public_pem,
+          scheme: :rsa
+        )
+      end
+      assert_includes error.message, "openssl error"
+    end
   end
 end

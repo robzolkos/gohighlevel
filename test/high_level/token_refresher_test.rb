@@ -145,6 +145,41 @@ module HighLevel
       assert_nil refresher.refresh_for(resource_id: "loc-1")
     end
 
+    def test_returns_nil_when_location_token_derivation_itself_fails
+      @storage.set_session("loc-1",
+                           refresh_token: "loc-ref",
+                           userType: "Location",
+                           companyId: "co-1")
+      @storage.set_session("co-1", access_token: "company-tok", userType: "Company")
+      override_company_expiry("co-1", :far_future)
+
+      refresher = make_refresher(behaviors: {
+                                   refresh: UnauthorizedError.new("loc refresh failed", status: 401),
+                                   location_token: ServerError.new("locationToken endpoint down", status: 500)
+                                 })
+
+      assert_nil refresher.refresh_for(resource_id: "loc-1")
+    end
+
+    def test_returns_nil_when_company_token_refresh_fails_during_fallback
+      @storage.set_session("loc-1",
+                           refresh_token: "loc-ref",
+                           userType: "Location",
+                           companyId: "co-1")
+      @storage.set_session("co-1",
+                           access_token: "expired-co",
+                           refresh_token: "co-ref",
+                           userType: "Company")
+      override_company_expiry("co-1", :past)
+
+      refresher = make_refresher(behaviors: {
+                                   refresh_Location: UnauthorizedError.new("loc refresh failed", status: 401),
+                                   refresh_Company: UnauthorizedError.new("co refresh failed", status: 401)
+                                 })
+
+      assert_nil refresher.refresh_for(resource_id: "loc-1")
+    end
+
     private
 
     # Reach into Memory's private store to set expire_at. Memory's set_session
