@@ -16,6 +16,15 @@ require "tempfile"
 
 ROOT = File.expand_path("..", __dir__)
 VERSION_FILE = File.join(ROOT, "lib/high_level/version.rb")
+LOCKFILE = File.join(ROOT, "Gemfile.lock")
+CI_RUN_LIST_ARGS = [
+  "gh", "run", "list",
+  "--workflow=ci.yml",
+  "--branch=master",
+  "--event=push",
+  "--limit=20",
+  "--json=databaseId,headSha"
+].freeze
 
 def run(*cmd)
   out, status = Open3.capture2e(*cmd, chdir: ROOT)
@@ -26,6 +35,10 @@ def run!(*cmd)
   out, ok = run(*cmd)
   abort "✗ command failed: #{cmd.join(" ")}\n#{out}" unless ok
   out
+end
+
+def system!(*cmd)
+  abort "✗ command failed: #{cmd.join(" ")}" unless system(*cmd, chdir: ROOT)
 end
 
 def current_version
@@ -49,6 +62,27 @@ end
 def prompt(message)
   print message
   $stdin.gets.to_s.strip
+end
+
+def ci_run_id(sha)
+  out, ok = run(*CI_RUN_LIST_ARGS, "--jq", %(.[] | select(.headSha == "#{sha}") | .databaseId))
+  return unless ok
+
+  out.lines.first&.strip
+end
+
+def wait_for_ci!(sha)
+  puts "\nWaiting for CI for #{sha[0, 7]}..."
+  run_id = nil
+  30.times do
+    run_id = ci_run_id(sha)
+    break unless run_id.to_s.empty?
+
+    sleep 2
+  end
+  abort "✗ could not find CI run for #{sha}" if run_id.to_s.empty?
+
+  system!("gh", "run", "watch", run_id, "--exit-status")
 end
 
 # --- preflight -------------------------------------------------------
@@ -102,16 +136,24 @@ end
 
 # --- confirm + execute ----------------------------------------------
 puts
+action = if kind == :as_is
+           "release current #{new_version}"
+         else
+           "bump version.rb → #{new_version}, update Gemfile.lock, commit, push"
+         end
 puts "About to:"
-puts "  • #{kind == :as_is ? "release current #{new_version}" : "bump version.rb → #{new_version}, commit, push"}"
+puts "  • #{action}"
 puts "  • create GitHub Release #{tag} (triggers publish to RubyGems)"
 abort "aborted — no changes made" unless prompt("\nProceed? [y/N]: ").downcase == "y"
 
 unless kind == :as_is
   write_version(new_version)
-  run!("git", "add", VERSION_FILE)
+  run!("bundle", "install")
+  run!("git", "add", VERSION_FILE, LOCKFILE)
   run!("git", "commit", "-m", "Release #{tag}")
+  sha = run!("git", "rev-parse", "HEAD")
   run!("git", "push", "origin", "master")
+  wait_for_ci!(sha)
 end
 
 run!("gh", "release", "create", tag, "--title", tag, "--notes-file", notes_file.path)
