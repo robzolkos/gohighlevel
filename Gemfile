@@ -16,5 +16,5 @@ group :development, :test do
   # backend contract tests exercise each one.
   gem "activerecord", "~> 8.0"
   gem "redis", "~> 5.0"
-  gem "sqlite3", "~> 2.0"
+  gem "sqlite3", "~> 2.9"
 end
