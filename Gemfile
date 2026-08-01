@@ -7,7 +7,7 @@ gemspec
 group :development, :test do
   gem "minitest", "~> 6.0"
   gem "rake", "~> 13.0"
-  gem "rubocop", "~> 1.87"
+  gem "rubocop", "~> 1.88"
   gem "simplecov", "~> 0.22", require: false
   gem "webmock", "~> 3.20"
   gem "yard", "~> 0.9"
