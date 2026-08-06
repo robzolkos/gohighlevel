@@ -15,6 +15,6 @@ group :development, :test do
   # Storage backends — runtime-optional for users; required here so the
   # backend contract tests exercise each one.
   gem "activerecord", "~> 8.0"
-  gem "redis", "~> 5.0"
+  gem "redis", "~> 6.0"
   gem "sqlite3", "~> 2.9"
 end
